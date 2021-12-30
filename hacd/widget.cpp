@@ -1,3 +1,41 @@
+#include "widget.h"
+
+#define DEFINE2STR(R) #R
+#define STR(R) R
+
+Widget::Widget(QWidget *parent)
+    : QWidget(parent)
+{
+    comboBox = new QComboBox(this);
+    comboBox->addItem("directory");
+    comboBox->addItem(".obj");
+
+    pathLabel = new QLineEdit(this);
+
+    pathBtn = new QPushButton(this);
+    pathBtn->setText("select path");
+
+    QHBoxLayout *pathLayout = new QHBoxLayout;
+    pathLayout->addWidget(pathLabel);
+    pathLayout->addWidget(pathBtn);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    singleDirBtn = new QPushButton(this);
+    singleDirBtn->setText("single path");
+
+    mainLayout->addWidget(comboBox);
+    mainLayout->addLayout(pathLayout);
+    mainLayout->addWidget(singleDirBtn);
+
+    setLayout(mainLayout);
+
+    initConnection();
+}
+
+Widget::~Widget()
+{
+}
+
 /* Copyright (c) 2011 Khaled Mamou (kmamou at gmail dot com)
  All rights reserved.
 
@@ -52,6 +90,9 @@ public:
     double m_ccConnectDist;
     size_t m_nClusters;
     size_t m_targetNTrianglesDecimatedMesh;
+
+    std::string m_fileNameIn;
+    std::string m_fileNameOut;
 };
 
 void CallBack(const char * msg, double progress, double concavity, size_t nVertices)
@@ -70,27 +111,9 @@ bool SaveOFF(const std::string & fileName, size_t nV, size_t nT, const HACD::Vec
 bool SavePartition(const std::string & fileName, const std::vector< HACD::Vec3<HACD::Real> > & points,
                    const std::vector< HACD::Vec3<long> > & triangles,
                    const long * partition, const size_t nClusters);
-int main(int argc, char * argv[])
+int main_real(const Parameters &params)
 {
-    if (argc < 2)
-    {
-        std::cout << "Usage: ./testHACD fileName.off minNClusters maxConcavity invertInputFaces addExtraDistPoints addFacesPoints ConnectedComponentsDist targetNTrianglesDecimatedMesh"<< std::endl;
-        std::cout << "Recommended parameters: ./testHACD fileName.off 2 100 0 1 1 30 2000"<< std::endl;
-        return -1;
-    }
-
-    Parameters params;
-    if (0) {
-        params.m_nClusters = atoi(argv[2]);
-        params.m_concavity = atof(argv[3]);
-        params.m_invert = (atoi(argv[4]) == 0)?false:true;
-        params.m_addFacesPoints = (atoi(argv[5]) == 0)?false:true;
-        params.m_addExtraDistPoints = (atoi(argv[6]) == 0)?false:true;
-        params.m_ccConnectDist = atof(argv[7]);
-        params.m_targetNTrianglesDecimatedMesh = atoi(argv[8]);
-    }
-
-    const std::string fileName(argv[1]);
+    std::string fileName = params.m_fileNameIn;
     size_t nClusters = params.m_nClusters;
     double concavity = params.m_concavity;
     bool invert = params.m_invert;
@@ -205,7 +228,8 @@ int main(int argc, char * argv[])
             delete [] trianglesCH;
         }
     }
-    std::string outFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + "_hacd.wrl";
+    //std::string outFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + "_hacd.wrl";
+    std::string outFileName = params.m_fileNameOut;
     myHACD->Save(outFileName.c_str(), false);
 
     const HACD::Vec3<HACD::Real> * const decimatedPoints = myHACD->GetDecimatedPoints();
@@ -577,4 +601,85 @@ bool SavePartition(const std::string & fileName, const std::vector< HACD::Vec3<H
         return true;
     }
     return false;
+}
+
+void Widget::initConnection() {
+    connect(pathBtn, &QPushButton::clicked, this, &Widget::selectPath);
+    connect(singleDirBtn, &QPushButton::clicked, this, &Widget::action);
+}
+
+void Widget::selectPath() {
+    QString qspath;
+    switch(comboBox->currentIndex()) {
+    case 0:
+        qspath = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                    ".",
+                                                    QFileDialog::ShowDirsOnly
+                                                    | QFileDialog::DontResolveSymlinks);
+        pathLabel->setText(qspath);
+        update();
+        break;
+    case 1:
+        qspath = QFileDialog::getOpenFileName(this, tr("Open .obj file"),
+                                                    ".",
+                                                    tr("obj (*.obj *.off)"));
+        pathLabel->setText(qspath);
+        break;
+    default:
+        break;
+    }
+}
+
+void Widget::action() {
+    switch(comboBox->currentIndex()) {
+    case 0:
+    {
+    QString qsdir = pathLabel->text();
+
+    QDir dir(qsdir);
+    if (!dir.exists()) return;
+    QStringList qfilelist = dir.entryList(QDir::Files);
+    qDebug() << "start";
+    foreach (QString qfile, qfilelist) {
+        if (!qfile.endsWith(".obj") && !qfile.endsWith(".off")) continue;
+        QFile file(dir.absolutePath() + "/" + qfile);
+        if (!file.exists()) continue;
+
+        qsizetype idx = qfile.lastIndexOf('.');
+        QString qsName = qfile.mid(0, idx - 1);
+
+        Parameters params;
+        params.m_fileNameIn = (dir.absolutePath() + "/" + qfile).toStdString();
+        params.m_fileNameOut = (dir.absolutePath() + "/../output_" + qsName).toStdString() + "_final.wrl";
+        qDebug() << "input " << params.m_fileNameIn.c_str();
+        qDebug() << "output " << params.m_fileNameOut.c_str();
+        main_real(params);
+    }
+    qDebug() << "end";
+    }
+        break;
+    case 1:
+    {
+        QString qfile = pathLabel->text();
+        if (!qfile.endsWith(".obj") && !qfile.endsWith(".off")) return;
+        QFile file(qfile);
+        if (!file.exists()) return;
+
+        qsizetype pathidx = qfile.lastIndexOf('/');
+        qsizetype idx = qfile.lastIndexOf('.');
+        QString qsName = qfile.mid(pathidx + 1, idx - pathidx - 1);
+        QString qsPath = qfile.mid(0, pathidx);
+
+        Parameters params;
+        params.m_fileNameIn = (qfile).toStdString();
+        params.m_fileNameOut = (qsPath + "/../output_" + qsName).toStdString() + "_final.wrl";
+        qDebug() << "input " << params.m_fileNameIn.c_str();
+        qDebug() << "output " << params.m_fileNameOut.c_str();
+        main_real(params);
+    }
+        break;
+    default:
+        break;
+    }
+
 }
