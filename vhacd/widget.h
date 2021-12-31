@@ -9,8 +9,6 @@
 #include <QVBoxLayout>
 #include <QComboBox>
 
-#include "vhacdworker.h"
-
 class Widget : public QWidget
 {
     Q_OBJECT

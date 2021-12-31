@@ -33,3 +33,5 @@
 
 *.user
 **/build
+**/models
+**/output

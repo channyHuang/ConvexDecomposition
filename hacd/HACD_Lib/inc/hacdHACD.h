@@ -23,6 +23,9 @@
 #include <vector>
 #include <queue>
 
+#define CHANGLE_CONCAVITY
+#define CHANGE_SAMPLE
+
 namespace HACD
 {
     const double                                    sc_pi = 3.14159265;

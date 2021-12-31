@@ -297,9 +297,19 @@ namespace HACD
 #ifdef THREAD_DIST_POINTS
 #pragma omp parallel for
 #endif
+
+#ifdef CHANGE_SAMPLE
+            Vec3<Real> vdir[3] = {m_points[i] - m_points[j], m_points[i] - m_points[k], m_points[j] - m_points[k]};
+            for (int cdir = 0; cdir < 3; cdir++) {
+                int steps = std::sqrt(vdir[cdir].X() * vdir[cdir].X() + vdir[cdir].Y() * vdir[cdir].Y() + vdir[cdir].Z() * vdir[cdir].Z());
+                for (int sidx = 0; sidx < steps; sidx++) {
+                    Vec3<Real> seedPoint = (cdir == 2 ? m_points[k] : m_points[i]) + vdir[cdir] * sidx;
+#endif
 			for(long f = 0; f < (long)m_nTriangles; f++)
 			{
+#ifndef CHANGE_SAMPLE
 				Vec3<Real> seedPoint((m_points[i] + m_points[j] + m_points[k]) / 3.0);
+#endif
 				Vec3<Real> hitPoint;
 				Vec3<Real> hitNormal;
 				normal = -normal;
@@ -335,7 +345,12 @@ namespace HACD
 					}
 				}        
 			}
-		}
+
+#ifdef CHANGE_SAMPLE
+                }
+            }
+#endif
+        }
 
         for (size_t v = 0; v < m_nPoints; v++) 
 		{
@@ -567,6 +582,11 @@ namespace HACD
 		if(!ch->IsFlat())
         {
             concavity = Concavity(*ch, distPoints);
+#ifdef CHANGLE_CONCAVITY
+            concavity = (gV1.m_convexHull->ComputeArea() + gV2.m_convexHull->ComputeArea() - ch->ComputeArea());
+            //concavity = std::sqrt(concavity);
+            concavity *= concavity;
+#endif
         }
 		concavity += concavity_flat;
 #ifdef HACD_PRECOMPUTE_CHULLS

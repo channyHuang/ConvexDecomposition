@@ -68,7 +68,7 @@ static inline void* btAlignedAllocDefault(size_t size, int32_t alignment)
 
     real = (char*)sAllocFunc(size + sizeof(void*) + (alignment - 1));
     if (real) {
-        offset = (alignment - (unsigned long)(real + sizeof(void*))) & (alignment - 1);
+        offset = (alignment - (unsigned long)(size_t)(real + sizeof(void*))) & (alignment - 1);
         ret = (void*)((real + sizeof(void*)) + offset);
         *((void**)(ret)-1) = (void*)(real);
     }
