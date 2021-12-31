@@ -29,6 +29,9 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "vhacdRaycastMesh.h"
 #include <vector>
 
+#define CHANGE_COMPUTE_CONCAVITY
+#define CHANGE_PLANE
+
 #define USE_THREAD 1
 #define OCL_MIN_NUM_PRIMITIVES 4096
 #define CH_APP_MIN_NUM_PRIMITIVES 64000
@@ -349,6 +352,9 @@ private:
     double m_operationProgress;
     double m_rot[3][3];
     double m_volumeCH0;
+#ifdef CHANGE_COMPUTE_CONCAVITY
+    double m_volumeCH;
+#endif
     Vec3<double> m_barycenter;
     Timer m_timer;
     size_t m_dim;

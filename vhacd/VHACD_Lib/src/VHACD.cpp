@@ -392,6 +392,7 @@ bool VHACD::OCLRelease(IUserLogger* const logger)
     return false;
 #endif //CL_VERSION_1_1
 }
+// CNH: calculate volumes inside surface or on surface
 void VHACD::ComputePrimitiveSet(const Parameters& params)
 {
     if (GetCancel()) {
@@ -912,6 +913,9 @@ void VHACD::ComputeBestClippingPlane(const PrimitiveSet* inputPSet, const double
             double concavityLeft = ComputeConcavity(volumeLeft, volumeLeftCH, m_volumeCH0);
             double concavityRight = ComputeConcavity(volumeRight, volumeRightCH, m_volumeCH0);
             double concavity = (concavityLeft + concavityRight);
+#ifdef CHANGE_COMPUTE_CONCAVITY
+            concavity = (volumeLeftCH + volumeRightCH - m_volumeCH) * (volumeLeftCH + volumeRightCH - m_volumeCH) / (m_volumeCH0 * m_volumeCH0);
+#endif
 
             // compute cost
             double balance = alpha * fabs(volumeLeft - volumeRight) / m_volumeCH0;
@@ -1054,6 +1058,9 @@ void VHACD::ComputeACD(const Parameters& params)
             if (firstIteration) {
                 m_volumeCH0 = volumeCH;
             }
+#ifdef CHANGE_COMPUTE_CONCAVITY
+            m_volumeCH = volumeCH;
+#endif
 
             double concavity = ComputeConcavity(volume, volumeCH, m_volumeCH0);
             double error = 1.01 * pset->ComputeMaxVolumeError() / m_volumeCH0;
@@ -1321,6 +1328,11 @@ void VHACD::MergeConvexHulls(const Parameters& params)
 			{
                 ComputeConvexHull(m_convexHulls[p1], m_convexHulls[p2], pts, &combinedCH);
                 costMatrix[idx++] = ComputeConcavity(volume1 + m_convexHulls[p2]->ComputeVolume(), combinedCH.ComputeVolume(), m_volumeCH0);
+#ifdef CHANGE_COMPUTE_CONCAVITY
+                costMatrix[--idx] = (m_convexHulls[p1]->ComputeVolume() + m_convexHulls[p2]->ComputeVolume());
+                costMatrix[idx] *= costMatrix[idx] / (m_volumeCH0 * m_volumeCH0);
+                idx++;
+#endif
             }
         }
 
@@ -1374,6 +1386,11 @@ void VHACD::MergeConvexHulls(const Parameters& params)
 			{
                 ComputeConvexHull(m_convexHulls[p2], m_convexHulls[i], pts, &combinedCH);
                 costMatrix[rowIdx++] = ComputeConcavity(volume1 + m_convexHulls[i]->ComputeVolume(), combinedCH.ComputeVolume(), m_volumeCH0);
+#ifdef CHANGE_COMPUTE_CONCAVITY
+                costMatrix[--rowIdx] = (m_convexHulls[i]->ComputeVolume() + m_convexHulls[p2]->ComputeVolume());
+                costMatrix[rowIdx] *= costMatrix[idx] / (m_volumeCH0 * m_volumeCH0);
+                rowIdx++;
+#endif
             }
 
             rowIdx += p2;
@@ -1381,6 +1398,10 @@ void VHACD::MergeConvexHulls(const Parameters& params)
 			{
                 ComputeConvexHull(m_convexHulls[p2], m_convexHulls[i], pts, &combinedCH);
                 costMatrix[rowIdx] = ComputeConcavity(volume1 + m_convexHulls[i]->ComputeVolume(), combinedCH.ComputeVolume(), m_volumeCH0);
+#ifdef CHANGE_COMPUTE_CONCAVITY
+                costMatrix[rowIdx] = (m_convexHulls[i]->ComputeVolume() + m_convexHulls[p2]->ComputeVolume());
+                costMatrix[rowIdx] *= costMatrix[idx] / (m_volumeCH0 * m_volumeCH0);
+#endif
                 rowIdx += i;
                 assert(rowIdx >= 0);
             }
