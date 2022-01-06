@@ -75,6 +75,11 @@ public:
         m_size = size;
     }
 
+    void Resize_Old(size_t size)
+    {
+        Allocate(size);
+    }
+
     void PushBack(const T& value)
     {
         if (m_size == m_maxSize) {

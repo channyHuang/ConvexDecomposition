@@ -2,10 +2,6 @@
 
 #include <QApplication>
 
-#include <Qdir>
-#include <QDebug>
-
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);

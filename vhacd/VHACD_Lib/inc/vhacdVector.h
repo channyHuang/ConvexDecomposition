@@ -19,6 +19,7 @@
 #include <math.h>
 
 namespace VHACD {
+typedef double Real;
 //!    Vector dim 3.
 template <typename T>
 class Vec3 {

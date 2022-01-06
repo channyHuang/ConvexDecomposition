@@ -24,6 +24,29 @@ class TMMEdge;
 class TMMesh;
 class ICHull;
 
+class DPoint
+{
+public:
+                                                            DPoint(long name=0, Real dist=0, bool computed=false, bool distOnly=false)
+                                                                :m_name(name),
+                                                                 m_dist(dist),
+                                                                 m_computed(computed),
+                                                                 m_distOnly(distOnly){};
+                                                            ~DPoint(){};
+//private:
+    long													m_name;
+    Real                                                    m_dist;
+    bool													m_computed;
+    bool                                                    m_distOnly;
+    /*friend class TMMTriangle;
+    friend class TMMesh;
+    friend class GraphVertex;
+    friend class GraphEdge;
+    friend class Graph;
+    friend class ICHull;
+    friend class HACD;*/
+};
+
 //!    Vertex data structure used in a triangular manifold mesh (TMM).
 class TMMVertex {
 public:
@@ -31,7 +54,7 @@ public:
     TMMVertex(void);
     ~TMMVertex(void);
 
-private:
+//private:
     Vec3<double> m_pos;
     int32_t m_name;
     size_t m_id;
@@ -52,7 +75,7 @@ public:
     TMMEdge(void);
     ~TMMEdge(void);
 
-private:
+//private:
     size_t m_id;
     CircularListElement<TMMTriangle>* m_triangles[2];
     CircularListElement<TMMVertex>* m_vertices[2];
@@ -71,11 +94,13 @@ public:
     TMMTriangle(void);
     ~TMMTriangle(void);
 
-private:
+//private:
     size_t m_id;
     CircularListElement<TMMEdge>* m_edges[3];
     CircularListElement<TMMVertex>* m_vertices[3];
     bool m_visible;
+
+    SArray<long, SARRAY_DEFAULT_MIN_SIZE>				m_incidentPoints;
 
     TMMTriangle(const TMMTriangle& rhs);
     friend class ICHull;
@@ -129,7 +154,7 @@ public:
     //! Destructor
     virtual ~TMMesh(void);
 
-private:
+//private:
     CircularList<TMMVertex> m_vertices;
     CircularList<TMMEdge> m_edges;
     CircularList<TMMTriangle> m_triangles;
@@ -137,6 +162,11 @@ private:
     // not defined
     TMMesh(const TMMesh& rhs);
     friend class ICHull;
+
 };
+
+long														IntersectRayTriangle( const Vec3<double> & P0, const Vec3<double> & dir,
+                                                                                  const Vec3<double> & V0, const Vec3<double> & V1,
+                                                                                  const Vec3<double> & V2, double &t);
 }
 #endif // VHACD_MANIFOLD_MESH_H

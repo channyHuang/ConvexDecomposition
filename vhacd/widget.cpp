@@ -176,7 +176,7 @@ int main_real(Parameters &params)
         //ParseParameters(argc, argv, params);
         MyCallback myCallback;
         MyLogger myLogger(params.m_fileNameLog);
-        params.m_paramsVHACD.m_logger = &myLogger;
+        //params.m_paramsVHACD.m_logger = &myLogger;
         params.m_paramsVHACD.m_callback = &myCallback;
         Usage(params);
         if (!params.m_run) {

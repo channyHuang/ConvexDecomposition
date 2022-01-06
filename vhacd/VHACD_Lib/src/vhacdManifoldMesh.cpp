@@ -199,4 +199,44 @@ bool TMMesh::CheckConsistancy()
     }
     return true;
 }
+
+long  IntersectRayTriangle(const Vec3<double> & P0, const Vec3<double> & dir,
+                           const Vec3<double> & V0, const Vec3<double> & V1,
+                           const Vec3<double> & V2, double &t)
+{
+    const double EPS = 1e-9;
+    const double EPS1 = 1e-6;
+    t = 0.0;
+    Vec3<double> edge1, edge2, edge3;
+    double det;
+    edge1 = V1 - V2;
+    edge2 = V2 - V0;
+    Vec3<double> pvec = dir ^ edge2;
+    det = edge1 * pvec;
+    if (det < EPS && det > -EPS)
+        return 0;
+    Vec3<double> tvec = P0 - V0;
+    Vec3<double> qvec = tvec ^ edge1;
+    t = (edge2 * qvec) / det;
+    if (t < 0.0)
+    {
+        return 0;
+    }
+    edge3 = V0 - V1;
+    Vec3<double> I(P0 + t * dir);
+    Vec3<double> s0 = (I-V0) ^ edge3;
+    Vec3<double> s1 = (I-V1) ^ edge1;
+    Vec3<double> s2 = (I-V2) ^ edge2;
+
+    Vec3<double> normal = edge1 ^ edge2;
+    double diff = normal.GetNorm() - s0.GetNorm() - s1.GetNorm() - s2.GetNorm();
+
+    if (diff < EPS1 && diff > -EPS1)
+    {
+        return 1;
+    }
+    return 0;
+}
+
+
 }

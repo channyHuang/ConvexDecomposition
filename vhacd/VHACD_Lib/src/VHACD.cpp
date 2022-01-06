@@ -1046,6 +1046,9 @@ void VHACD::ComputeACD(const Parameters& params)
 
             PrimitiveSet* pset = inputParts[p];
             inputParts[p] = 0;
+            if (pset == nullptr) {
+                continue;
+            }
             double volume = pset->ComputeVolume();
             pset->ComputeBB();
             pset->ComputePrincipalAxes();
@@ -1085,8 +1088,8 @@ void VHACD::ComputeACD(const Parameters& params)
                 double w = ComputePreferredCuttingDirection(pset, preferredCuttingDirection);
                 planes.Resize(0);
                 if (params.m_mode == 0) {
-                    VoxelSet* vset = (VoxelSet*)pset;
-                    ComputeAxesAlignedClippingPlanes(*vset, params.m_planeDownsampling, planes);
+                    //VoxelSet* vset = (VoxelSet*)pset;
+                    //ComputeAxesAlignedClippingPlanes(*vset, params.m_planeDownsampling, planes);
                 }
                 else {
                     TetrahedronSet* tset = (TetrahedronSet*)pset;
@@ -1099,6 +1102,9 @@ void VHACD::ComputeACD(const Parameters& params)
                     params.m_logger->Log(msg.str().c_str());
                 }
 
+                m_vhacdChange.GetClipPlanes(planes);
+
+                // calculate best clip plane
                 Plane bestPlane;
                 double minConcavity = MAX_DOUBLE;
                 ComputeBestClippingPlane(pset,
@@ -1114,6 +1120,7 @@ void VHACD::ComputeACD(const Parameters& params)
                     bestPlane,
                     minConcavity,
                     params);
+                /*
                 if (!m_cancel && (params.m_planeDownsampling > 1 || params.m_convexhullDownsampling > 1)) {
                     planesRef.Resize(0);
 
@@ -1145,6 +1152,7 @@ void VHACD::ComputeACD(const Parameters& params)
                         minConcavity,
                         params);
                 }
+                */
                 if (GetCancel()) {
                     delete pset; // clean up
                     break;

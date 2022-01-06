@@ -29,8 +29,12 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 #include "vhacdRaycastMesh.h"
 #include <vector>
 
-#define CHANGE_COMPUTE_CONCAVITY
-#define CHANGE_PLANE
+//#define CHANGE_COMPUTE_CONCAVITY
+#define CHANGE_CLIP_PLANE
+
+#ifdef CHANGE_CLIP_PLANE
+#include "vhacdChange.h"
+#endif
 
 #define USE_THREAD 1
 #define OCL_MIN_NUM_PRIMITIVES 4096
@@ -117,7 +121,7 @@ public:
 
 	virtual bool ComputeCenterOfMass(double centerOfMass[3]) const;
 
-private:
+//private:
     void SetCancel(bool cancel)
     {
         m_cancelMutex.Lock();
@@ -326,6 +330,25 @@ private:
         if (params.m_oclAcceleration) {
             // build kernels
         }
+#ifdef CHANGE_CLIP_PLANE	
+        std::vector< Vec3<Real> > old_points;
+        std::vector< Vec3<long> > old_triangles;
+        for (int i = 0; i < nPoints; i++) {
+            old_points.push_back(Vec3<Real>(points[i * 3 + 0], points[i * 3 + 1], points[i * 3 + 2]));
+        }
+        for (int i = 0; i < nTriangles; i++) {
+            old_triangles.push_back(Vec3<long>(triangles[i * 3 + 0], triangles[i * 3 + 1], triangles[i * 3 + 2]));
+        }
+
+        m_vhacdChange.SetPoints(&old_points[0]);
+        m_vhacdChange.SetNPoints(old_points.size());
+        m_vhacdChange.SetTriangles(&old_triangles[0]);
+        m_vhacdChange.SetNTriangles(old_triangles.size());
+        m_vhacdChange.SetAddExtraDistPoints(true);
+        m_vhacdChange.CreateGraph();
+        m_vhacdChange.InitializeDualGraph();
+        m_vhacdChange.InitializePriorityQueue();
+#endif
         AlignMesh(points, 3, nPoints, (int32_t *)triangles, 3, nTriangles, params);
         VoxelizeMesh(points, 3, nPoints, (int32_t *)triangles, 3, nTriangles, params);
         ComputePrimitiveSet(params);
@@ -342,7 +365,7 @@ private:
         return true;
     }
 
-private:
+//private:
 	RaycastMesh		*mRaycastMesh{ nullptr };
     SArray<Mesh*> m_convexHulls;
     std::string m_stage;
@@ -372,6 +395,9 @@ private:
     cl_kernel* m_oclKernelComputeSum;
     size_t m_oclWorkGroupSize;
 #endif //CL_VERSION_1_1
+#ifdef CHANGE_CLIP_PLANE
+    VHACDChange m_vhacdChange;
+#endif
 };
 }
 #endif // VHACD_VHACD_H
