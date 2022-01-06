@@ -146,8 +146,8 @@ int main_real(const Parameters &params)
     }
 
     std::string file(fileName.substr(found+1));
-    std::string outWRLFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + ".wrl";
-    std::string outOFFFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + ".off";
+    //std::string outWRLFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + ".wrl";
+    //std::string outOFFFileName = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + ".off";
     std::string outOFFFileNameDecimated = folder + PATH_SEP + file.substr(0, file.find_last_of(".")) + "_decimated.off";
     std::vector< HACD::Vec3<HACD::Real> > points;
     std::vector< HACD::Vec3<long> > triangles;
@@ -178,9 +178,9 @@ int main_real(const Parameters &params)
     myHACD->SetNClusters(nClusters);                     // minimum number of clusters
     myHACD->SetNVerticesPerCH(100);                      // max of 100 vertices per convex-hull
     myHACD->SetConcavity(concavity);                     // maximum concavity
-    myHACD->SetSmallClusterThreshold(0.25);				 // threshold to detect small clusters
+    myHACD->SetSmallClusterThreshold(0.05);				 // threshold to detect small clusters
     myHACD->SetNTargetTrianglesDecimatedMesh(targetNTrianglesDecimatedMesh); // # triangles in the decimated mesh
-    myHACD->SetCallBack(&CallBack);
+    //myHACD->SetCallBack(&CallBack);
     myHACD->SetAddExtraDistPoints(addExtraDistPoints);
     myHACD->SetAddFacesPoints(addFacesPoints);
 
@@ -671,6 +671,7 @@ void Widget::action() {
         QString qsPath = qfile.mid(0, pathidx);
 
         Parameters params;
+        params.Init();
         params.m_fileNameIn = (qfile).toStdString();
         params.m_fileNameOut = (qsPath + "/../output_" + qsName).toStdString() + "_final.wrl";
         qDebug() << "input " << params.m_fileNameIn.c_str();

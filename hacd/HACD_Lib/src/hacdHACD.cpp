@@ -46,14 +46,16 @@ namespace HACD
                 if (itDP->first >= nPoints)
                 {
 					pt = itDP->first - nPoints;
-					if ( ch.IsInside(m_extraDistPoints[pt], eps))
-					{
-						distance = ch.ComputeDistance(itDP->first, m_extraDistPoints[pt], m_extraDistNormals[pt], (itDP->second).m_computed, true);
+                    for (int i = 0; i < m_extraDistPoints[pt].size(); ++i) {
+                    if ( ch.IsInside(m_extraDistPoints[pt][i], eps))
+                    {
+                        distance = std::max(distance, ch.ComputeDistance(itDP->first, m_extraDistPoints[pt][i], m_extraDistNormals[pt][i], (itDP->second).m_computed, true));
 					}
 					else
 					{
-						distance = 0.0;
+                        //distance = 0.0;
 					}
+                    }
                 }
 				else if (itDP->first >= 0)
                 {
@@ -228,8 +230,8 @@ namespace HACD
         if (m_addExtraDistPoints)
         {
             rm.Initialize(m_nPoints, m_nTriangles, m_points, m_triangles, 15);
-            m_extraDistPoints = new Vec3<Real>[m_nTriangles];
-            m_extraDistNormals = new Vec3<Real>[m_nTriangles];
+            m_extraDistPoints = new std::vector<Vec3<Real>>[m_nTriangles];
+            m_extraDistNormals = new std::vector<Vec3<Real>>[m_nTriangles];
         }
         double progressOld = -1.0;
         double progress = 0.0;
@@ -299,10 +301,21 @@ namespace HACD
 #endif
 
 #ifdef CHANGE_SAMPLE
+            for(unsigned long f = 0; f < m_nTriangles; f++)
+            {
+                i = m_triangles[f].X();
+                j = m_triangles[f].Y();
+                k = m_triangles[f].Z();
+
+                u = m_points[j] - m_points[i];
+                v = m_points[k] - m_points[i];
+                w = m_points[k] - m_points[j];
+                normal = u ^ v;
+
             Vec3<Real> vdir[3] = {m_points[i] - m_points[j], m_points[i] - m_points[k], m_points[j] - m_points[k]};
             for (int cdir = 0; cdir < 3; cdir++) {
                 int steps = std::sqrt(vdir[cdir].X() * vdir[cdir].X() + vdir[cdir].Y() * vdir[cdir].Y() + vdir[cdir].Z() * vdir[cdir].Z());
-                for (int sidx = 0; sidx < steps; sidx++) {
+                for (Real sidx = 0; sidx < steps; sidx += 1.f) {
                     Vec3<Real> seedPoint = (cdir == 2 ? m_points[k] : m_points[i]) + vdir[cdir] * sidx;
 #endif
 			for(long f = 0; f < (long)m_nTriangles; f++)
@@ -324,8 +337,8 @@ namespace HACD
 
                 if (faceIndex < m_nTriangles )
                 {
-					m_extraDistPoints[f] = hitPoint;
-					m_extraDistNormals[f] = hitNormal;
+                    m_extraDistPoints[f].push_back(hitPoint);
+                    m_extraDistNormals[f].push_back(hitNormal);
 					m_graph.m_vertices[f].m_distPoints.PushBack(DPoint(m_nPoints+f, 0, false, true));
 				}
 
@@ -348,6 +361,7 @@ namespace HACD
 
 #ifdef CHANGE_SAMPLE
                 }
+            }
             }
 #endif
         }
@@ -439,7 +453,7 @@ namespace HACD
         m_ccConnectDist = 30;
 		m_targetNTrianglesDecimatedMesh = 1000;
 		m_flatRegionThreshold = 1.0;
-		m_smallClusterThreshold = 0.25;
+        m_smallClusterThreshold = 0.05;
 		m_area = 0.0;					
 	}																
 	HACD::~HACD(void)
@@ -584,7 +598,6 @@ namespace HACD
             concavity = Concavity(*ch, distPoints);
 #ifdef CHANGLE_CONCAVITY
             concavity = (gV1.m_convexHull->ComputeArea() + gV2.m_convexHull->ComputeArea() - ch->ComputeArea());
-            //concavity = std::sqrt(concavity);
             concavity *= concavity;
 #endif
         }

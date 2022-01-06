@@ -24,7 +24,7 @@
 #include <queue>
 
 #define CHANGLE_CONCAVITY
-#define CHANGE_SAMPLE
+//#define CHANGE_SAMPLE
 
 namespace HACD
 {
@@ -275,8 +275,8 @@ namespace HACD
         Vec3<Real> *                                m_facePoints;               //>! pointer to the faces points array
         Vec3<Real> *                                m_faceNormals;              //>! pointer to the faces normals array
         Vec3<Real> *                                m_normals;					//>! pointer the normals array
-        Vec3<Real> *                                m_extraDistPoints;          //>! pointer to the faces points array
-        Vec3<Real> *                                m_extraDistNormals;         //>! pointer to the faces normals array
+        std::vector<Vec3<Real>> *                                m_extraDistPoints;          //>! pointer to the faces points array
+        std::vector<Vec3<Real>> *                                m_extraDistNormals;         //>! pointer to the faces normals array
         size_t										m_nTrianglesDecimated;		//>! number of triangles in the original mesh
         size_t										m_nPointsDecimated;			//>! number of vertices in the original mesh
         size_t										m_nTriangles;				//>! number of triangles in the original mesh
